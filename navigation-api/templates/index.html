@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Demo Shop</title>
+</head>
+<body>
+    <h1>Demo Shop Surveillance</h1>
+    <p>Live Feed</p>
+    <img src="/video">
+
+    <hr>
+
+    <p>Virtual Map</p>
+    <img id="mapImage" src="/map">
+</body>
+
+<script>  
+    function updateMap() {
+      var mapImage = document.getElementById('mapImage');
+      mapImage.src = '/map?' + Date.now();
+    }
+  
+    setInterval(updateMap, 500);
+</script>
+</html>
