@@ -1,4 +1,6 @@
 from state_controller import CartStateMachine
+import time
+from request_interface import send_audio_text
 
 sm = CartStateMachine(allow_event_without_transition=True)
 
@@ -20,3 +22,9 @@ def finish():
 def cancel():
     sm.stop()
     return "Cancelling"
+
+def check_time(released_time):
+    if time.time() - released_time > 10:
+        send_audio_text("Are you still here?")
+        return True
+    return False

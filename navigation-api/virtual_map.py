@@ -2,6 +2,7 @@ from db_interface import get_map
 from PIL import Image, ImageDraw
 import math
 from navigation import create_grid, a_star
+from triangulation import triangulate_position
 
 CELL_SIZE = 20
 ARROW_LENGTH = 80
@@ -16,9 +17,11 @@ CART_COLOR = 'yellow'
 BACKGROUND_COLOR = 'gray'
 
 path = None
-cart_x, cart_y, cart_orientation = 16, 18, 0
+heading = None
 
-def generate_map():
+def generate_map(image_markers, cart_image_pos, orientation):
+    global heading
+    heading = orientation
     objects = get_map()
 
     max_x, max_y = 0, 0
@@ -36,7 +39,7 @@ def generate_map():
     map_img = Image.new('RGB', (canvas_width, canvas_height), color=BACKGROUND_COLOR)
     draw = ImageDraw.Draw(map_img)
 
-    # Draw map elements
+    virtual_map_markers = []
     for obj in objects:
         if obj[2] == 'WALL':
             data = eval(obj[3])
@@ -56,65 +59,71 @@ def generate_map():
             radius = CELL_SIZE // 3
             draw.ellipse((x - radius, y - radius, x + radius, y + radius), fill=LOCATION_COLOR)
 
+        elif obj[2] == 'MARKER':
+            data = eval(obj[3])
+            letter = obj[1]
+            virtual_map_markers.append((letter, data))
 
     path_x_a = 4 * CELL_SIZE
     path_x_b = 31 * CELL_SIZE
     path_y_a = 5 * CELL_SIZE
     path_y_b = 18 * CELL_SIZE
     draw.rectangle((path_x_a, path_y_a, path_x_b, path_y_b), fill=None, outline=255)
-    
-    cart_x, cart_y, heading = get_cart_info()
-    cart_x = cart_x * CELL_SIZE
-    cart_y = cart_y * CELL_SIZE
-    adjusted_heading = 90 - heading
 
-    arrow_end_x = cart_x + ARROW_LENGTH * math.cos(math.radians(adjusted_heading))
-    arrow_end_y = cart_y - ARROW_LENGTH * math.sin(math.radians(adjusted_heading))
+    pos = triangulate_position(cart_image_pos, image_markers, virtual_map_markers)
 
-    # Calculate cart bounding box
-    half_length = CART_LENGTH * CELL_SIZE / 2
-    half_width = CART_WIDTH * CELL_SIZE / 2
-    top_left = (-half_length, -half_width)
-    top_right = (half_length, -half_width)
-    bottom_right = (half_length, half_width)
-    bottom_left = (-half_length, half_width)
-    rotated_vertices = [
-        rotate_point(top_left, adjusted_heading, (cart_x, cart_y)),
-        rotate_point(top_right, adjusted_heading, (cart_x, cart_y)),
-        rotate_point(bottom_right, adjusted_heading, (cart_x, cart_y)),
-        rotate_point(bottom_left, adjusted_heading, (cart_x, cart_y))
-    ]   
+    if pos is not None and heading is not None:
+        cart_x = pos[0] * CELL_SIZE
+        cart_y = pos[1] * CELL_SIZE
+        adjusted_heading = 90 - heading
 
-    draw.line((cart_x, cart_y, arrow_end_x, arrow_end_y), fill=ARROW_COLOR, width=ARROW_WIDTH)
-    draw.polygon(rotated_vertices, fill=CART_COLOR)
-    draw.ellipse((cart_x - radius, cart_y - radius, cart_x + radius, cart_y + radius), fill=CART_CENTER_COLOR)
+        arrow_end_x = cart_x + ARROW_LENGTH * math.cos(math.radians(adjusted_heading))
+        arrow_end_y = cart_y - ARROW_LENGTH * math.sin(math.radians(adjusted_heading))
 
-    goal = None
-    for obj in objects:
-        if obj[2] == 'LOCATION' and obj[1] == 'milk':  # Find your milk
-            data = eval(obj[3])
-            goal = (data['x'], data['y'])
-            break
-    
-    start = (cart_x // CELL_SIZE, cart_y // CELL_SIZE)
-    if goal is not None:
-        grid = create_grid(objects)
-        path_c = a_star(grid, start, goal)
+        # Calculate cart bounding box
+        half_length = CART_LENGTH * CELL_SIZE / 2
+        half_width = CART_WIDTH * CELL_SIZE / 2
+        top_left = (-half_length, -half_width)
+        top_right = (half_length, -half_width)
+        bottom_right = (half_length, half_width)
+        bottom_left = (-half_length, half_width)
+        rotated_vertices = [
+            rotate_point(top_left, adjusted_heading, (cart_x, cart_y)),
+            rotate_point(top_right, adjusted_heading, (cart_x, cart_y)),
+            rotate_point(bottom_right, adjusted_heading, (cart_x, cart_y)),
+            rotate_point(bottom_left, adjusted_heading, (cart_x, cart_y))
+        ]   
 
-        if path_c:
-            for i in range(len(path_c) - 1):
-                x1, y1 = path_c[i][0] * CELL_SIZE, path_c[i][1] * CELL_SIZE
-                x2, y2 = path_c[i + 1][0] * CELL_SIZE, path_c[i + 1][1] * CELL_SIZE
-                draw.line((x1, y1, x2, y2), fill='blue', width=3)  # Example color
+        draw.line((cart_x, cart_y, arrow_end_x, arrow_end_y), fill=ARROW_COLOR, width=ARROW_WIDTH)
+        draw.polygon(rotated_vertices, fill=CART_COLOR)
+        draw.ellipse((cart_x - radius, cart_y - radius, cart_x + radius, cart_y + radius), fill=CART_CENTER_COLOR)
+
+        goal = None
+        for obj in objects:
+            if obj[2] == 'LOCATION' and obj[1] == 'milk':  # Find your milk
+                data = eval(obj[3])
+                goal = (data['x'], data['y'])
+                break
+        
+        start = (int(cart_x // CELL_SIZE), int(cart_y // CELL_SIZE))
+        if goal is not None:
+            grid = create_grid(objects)
+            try:
+                path_c = a_star(grid, start, goal)
+
+                if path_c:
+                    for i in range(len(path_c) - 1):
+                        x1, y1 = path_c[i][0] * CELL_SIZE, path_c[i][1] * CELL_SIZE
+                        x2, y2 = path_c[i + 1][0] * CELL_SIZE, path_c[i + 1][1] * CELL_SIZE
+                        draw.line((x1, y1, x2, y2), fill='blue', width=3)  # Example color
+
+                global path
+                path = path_c
+            except Exception as e:
+                print("A* failed", e)
 
     # Save the map image
     map_img.save('map.png')
-
-    global path
-    path = path_c
-
-def get_cart_info():
-    return cart_x, cart_y, cart_orientation
 
 def move(command):
     global cart_x, cart_y, cart_orientation
@@ -150,3 +159,7 @@ def rotate_point(point, angle, center):
     x_new = x * cos_a - y * sin_a
     y_new = x * sin_a + y * cos_a
     return x_new + center[0], y_new + center[1]
+
+def get_cart_heading():
+    global heading
+    return heading
