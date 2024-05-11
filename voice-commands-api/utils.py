@@ -63,7 +63,7 @@ def identify_product(text):
     return product[1]
 
 def make_tts(tts_text, timestamp = False):
-    tts = gTTS(text=tts_text, lang='en')
+    tts = gTTS(text=tts_text, lang='en', tld='com.au')
     tts.save(MP3_FILE)
 
     sound = AudioSegment.from_mp3(MP3_FILE) 

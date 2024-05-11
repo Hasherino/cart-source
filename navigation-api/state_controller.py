@@ -11,7 +11,7 @@ class CartStateMachine(StateMachine):
     go = idle.to(going)
     stop = going.to(idle)
 
-    def on_go(self, product):  # Handler for the 'go' transition
+    def on_go(self, product):
         print("Transitioning to Going state")
         self.start_timer(product)
 

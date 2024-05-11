@@ -16,5 +16,6 @@ INSERT INTO objects (name, type, data) VALUES
     ('o', 'MARKER', '{ "x": 31, "y": 5 }'),
     ('s', 'MARKER', '{ "x": 4, "y": 18 }'),
     ('x', 'MARKER', '{ "x": 31, "y": 18 }'),
-    ('milk', 'LOCATION', '{ "x": 14, "y": 5 }')
+    ('milk', 'LOCATION', '{ "x": 14, "y": 5 }'),
+    ('bread', 'LOCATION', '{ "x": 14, "y": 18 }')
 ;

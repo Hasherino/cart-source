@@ -24,7 +24,7 @@ def cancel():
     return "Cancelling"
 
 def check_time(released_time):
-    if time.time() - released_time > 10:
-        send_audio_text("Are you still here?")
+    if time.time() - released_time > 600:
+        send_audio_text("User inactive, stopping.")
         return True
     return False

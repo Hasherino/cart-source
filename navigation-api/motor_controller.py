@@ -21,8 +21,10 @@ def calculate_rotation_angle(current_point, next_point, orientation):
   return angle_diff  
 
 def send_instructions(path):
+    global code
     if path is None:
         print("No path found")
+        code = 1000
         return 0
     if len(path) == 3:
         return 1
@@ -32,7 +34,6 @@ def send_instructions(path):
 
     if current_pos and next_pos and orientation:
       angle = calculate_rotation_angle(current_pos, next_pos, orientation)
-      global code
       code = angle
     print("angle", code)
 

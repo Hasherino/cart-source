@@ -68,7 +68,7 @@ def generate_map(image_markers, cart_image_pos, orientation):
     path_x_b = 31 * CELL_SIZE
     path_y_a = 5 * CELL_SIZE
     path_y_b = 18 * CELL_SIZE
-    draw.rectangle((path_x_a, path_y_a, path_x_b, path_y_b), fill=None, outline=255)
+    # draw.rectangle((path_x_a, path_y_a, path_x_b, path_y_b), fill=None, outline=255)
 
     pos = triangulate_position(cart_image_pos, image_markers, virtual_map_markers)
 
@@ -124,32 +124,6 @@ def generate_map(image_markers, cart_image_pos, orientation):
 
     # Save the map image
     map_img.save('map.png')
-
-def move(command):
-    global cart_x, cart_y, cart_orientation
-
-    if command == "straight":
-        if cart_orientation == 0:  # North
-            cart_y -= 1
-        elif cart_orientation == 90:  # East
-            cart_x += 1
-        elif cart_orientation == 180:  # South
-            cart_y += 1
-        elif cart_orientation == 270:  # West
-            cart_x -= 1
-
-    elif command == "left":
-        cart_orientation = (cart_orientation - 90) % 360  # Rotate left
-
-    elif command == "right":
-        cart_orientation = (cart_orientation + 90) % 360  # Rotate right
-
-    else:
-        print("Invalid command:", command)
-        return 0
-    
-    return 1
-
 
 def rotate_point(point, angle, center):
     angle_rad = math.radians(-angle)

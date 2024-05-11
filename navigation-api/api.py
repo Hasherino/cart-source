@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify, Response, render_template, send_from_directory
 from utils import process_command, check_time
-from virtual_map import generate_map, move
+from virtual_map import generate_map
 import motor_controller
 import time
 import os
@@ -81,24 +81,16 @@ def process():
 
 @app.route('/get_instructions', methods=['GET'])
 def instructions():
-    print("Sending instructions:", motor_controller.code)
-    return str(motor_controller.code)
-
-@app.route('/move', methods=['POST'])
-def move_endpoint():
-    request_data = request.get_json()
-    print("Received request with payload:", request_data)
-
-    command = request_data.get('command')
-
-    res = move(command)
+    code = motor_controller.code
+    if code != 1000:
+        if code > 90:
+            code = 90
+        elif code < -90:
+            code = -90
+        code = -code
     
-    if res == 1:
-        response = "Moving cart:", command
-    else:
-        response = "Invalid move command:", command
-    print(response)
-    return jsonify(response)
+    print("Sending instructions:", code)
+    return str(code)
 
 @app.route('/set_handlebar', methods=['POST'])
 def handlebar_state():
