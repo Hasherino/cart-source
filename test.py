@@ -1,13 +1,10 @@
-from virtual_map import get_cart_heading, move
 import math
-
-code = 1000
 
 def calculate_rotation_angle(current_point, next_point, orientation):
   dx = next_point[0] - current_point[0]
   dy = next_point[1] - current_point[1]
 
-  target_angle = (math.degrees(math.atan2(dy, dx)) + 90) % 360
+  target_angle = math.degrees(math.atan2(dy, dx)) + 90
 
   angle_diff = target_angle - orientation
   if angle_diff > 180:
@@ -23,12 +20,11 @@ def send_instructions(path):
         print("No path found")
         code = 1000
         return 0
-    if len(path) == 3:
+    if len(path) <= 1:
         return 1
 
-    orientation = get_cart_heading()
+    orientation = 90
     current_pos, next_pos = path[0], path[1]
-    target_angle = 1000
 
     if current_pos and next_pos and orientation is not None:
       angle, target_angle = calculate_rotation_angle(current_pos, next_pos, orientation)
@@ -36,10 +32,7 @@ def send_instructions(path):
     print("Current:", orientation)
     print("Target:", target_angle)
     print("Diff:", code)
-    move(code)
 
     return 0
 
-def stop():
-   global code
-   code = 1000
+send_instructions([(15, 16), (14, 16), (15, 18)])

@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify, Response, render_template, send_from_directory
 from utils import process_command, check_time
-from virtual_map import generate_map
+from virtual_map import generate_map, move
 import motor_controller
 import time
 import os

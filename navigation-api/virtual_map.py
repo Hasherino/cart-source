@@ -17,11 +17,12 @@ CART_COLOR = 'yellow'
 BACKGROUND_COLOR = 'gray'
 
 path = None
-heading = None
+position = (18, 20)
+heading = 0
 
 def generate_map(image_markers, cart_image_pos, orientation):
     global heading
-    heading = orientation
+    # heading = orientation
     objects = get_map()
 
     max_x, max_y = 0, 0
@@ -70,7 +71,9 @@ def generate_map(image_markers, cart_image_pos, orientation):
     path_y_b = 18 * CELL_SIZE
     # draw.rectangle((path_x_a, path_y_a, path_x_b, path_y_b), fill=None, outline=255)
 
-    pos = triangulate_position(cart_image_pos, image_markers, virtual_map_markers)
+    # pos = triangulate_position(cart_image_pos, image_markers, virtual_map_markers)
+    global position
+    pos = position
 
     if pos is not None and heading is not None:
         cart_x = pos[0] * CELL_SIZE
@@ -137,3 +140,28 @@ def rotate_point(point, angle, center):
 def get_cart_heading():
     global heading
     return heading
+
+def move(command):
+    global position, heading
+
+    if command == 0:
+        if heading == 0:  # North
+            position = (position[0], position[1] - 1)
+        elif heading == 45:  # North
+            position = (position[0] - 1, position[1] - 1)
+        elif heading == 90:  # East
+            position = (position[0] + 1, position[1])
+        elif heading == 135:  # East
+            position = (position[0] + 1, position[1] + 1)
+        elif heading == 180:  # South
+            position = (position[0], position[1] + 1)
+        elif heading == 225:  # South
+            position = (position[0] - 1, position[1] + 1)
+        elif heading == 270:  # West
+            position = (position[0] - 1, position[1])
+        elif heading == 315:  # West
+            position = (position[0] - 1, position[1] - 1)
+    else:
+        heading = (heading + command) % 360  # Rotate left
+
+    return 1
