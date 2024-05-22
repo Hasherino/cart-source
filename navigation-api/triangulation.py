@@ -7,7 +7,7 @@ def match_markers(image_markers, virtual_map_markers):
         for virtual_marker in virtual_map_markers:
             if image_marker['letter'] == virtual_marker[0]:
                 matched_markers.append((image_marker, virtual_marker[1]))
-                break  # Assume unique letters
+                break
     return matched_markers
 
 def triangulate_position(cart_image_pos, image_markers, virtual_map_markers):
@@ -16,7 +16,6 @@ def triangulate_position(cart_image_pos, image_markers, virtual_map_markers):
 
     matched_markers = match_markers(image_markers, virtual_map_markers)
 
-    # Extract positions 
     image_markers = [(m[0]['centerX'], m[0]['centerY']) for m in matched_markers]
     virtual_map_markers = [(m[1]['x'], m[1]['y']) for m in matched_markers] 
 

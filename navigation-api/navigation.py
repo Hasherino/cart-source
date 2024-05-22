@@ -2,13 +2,14 @@ import heapq
 import numpy as np
 import time
 
+# Prefered path coordinates
 path_x_a, path_y_a, path_x_b, path_y_b = 4, 5, 31, 18
 
 def get_dimensions(objects):
     for obj in objects:
         if obj[2] == 'DIMENSIONS':
             return eval(obj[3])['width'], eval(obj[3])['height']
-    return None, None  # Handle the case where dimensions are not found
+    return None, None
 
 def create_grid(objects):
     width, height = get_dimensions(objects)
@@ -50,7 +51,7 @@ def a_star(array, start, goal):
         end_time = time.time()
         elapsed = end_time - start_time
         if elapsed > 1:
-            print("A* timed out")
+            print("Path finding algorithm timed out")
             return None
 
         current = heapq.heappop(oheap)[1]

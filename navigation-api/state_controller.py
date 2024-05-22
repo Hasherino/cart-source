@@ -13,6 +13,7 @@ class CartStateMachine(StateMachine):
 
     def on_go(self, product):
         print("Transitioning to Going state")
+        virtual_map.set_product(product)
         self.start_timer(product)
 
     def on_stop(self):

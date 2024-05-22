@@ -21,13 +21,12 @@ def GetBoundary(img):
     canny_edges = cv2.dilate(canny_edges, kernel, iterations=1)
     contours, _ = cv2.findContours(canny_edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     if contours:
-        floor_contour = max(contours, key=cv2.contourArea) # Assuming largest is the floor boundary
+        floor_contour = max(contours, key=cv2.contourArea)
     else:
         return []
 
-    # Create a mask with the same dimensions as the original image
-    floor_mask = np.zeros(img.shape[:2], dtype=np.uint8)  # Match the mask to 2D image
-    cv2.drawContours(floor_mask, [floor_contour], -1, 255, cv2.FILLED) # Fill with a single color
+    floor_mask = np.zeros(img.shape[:2], dtype=np.uint8)
+    cv2.drawContours(floor_mask, [floor_contour], -1, 255, cv2.FILLED)
 
     return floor_mask
 
@@ -43,10 +42,10 @@ def DetectCart(img):
     upper_cyan = np.array([120, 255, 255])
     cyan_mask = cv2.inRange(hsv, lower_cyan, upper_cyan)
     cyan_contours, _ = cv2.findContours(cyan_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-    # return purple_mask
+
     all_points = []
     for cnt in purple_contours:
-        if cv2.contourArea(cnt) > 10:  # Filter small contours
+        if cv2.contourArea(cnt) > 10:
             points = cnt.squeeze()
             if points.ndim == 2 and points.shape[1] == 2:  
                 all_points.extend(points) 
@@ -54,7 +53,6 @@ def DetectCart(img):
     if len(all_points) > 0:
         hull = cv2.convexHull(np.array(all_points))
 
-        # Get center of the convex hull
         moments = cv2.moments(hull)
         center_x = int(moments["m10"] / moments["m00"])
         center_y = int(moments["m01"] / moments["m00"])
@@ -64,11 +62,11 @@ def DetectCart(img):
 
     closest_point = None
     if len(cyan_contours) and center_x and center_y > 0:
-        cyan_contour = max(cyan_contours, key=cv2.contourArea)  # Assuming the largest contour
+        cyan_contour = max(cyan_contours, key=cv2.contourArea)
         
         min_dist = float('inf')
 
-        for pt in cyan_contour[:, 0, :]:  # Iterate over the contour's points
+        for pt in cyan_contour[:, 0, :]:
             x, y = pt 
             dist = np.sqrt((center_x - x)**2 + (center_y - y)**2)
             if dist < min_dist:
@@ -84,7 +82,6 @@ def DetectMarkers(img):
     
     filtered_contours = []
     for cnt in contours:
-        # Apply your filtering criteria here (area, aspect ratio, etc.)
         x, y, w, h = cv2.boundingRect(cnt)
         contour_overlaps = False
         for existing_cnt, _ in filtered_contours:
@@ -97,9 +94,8 @@ def DetectMarkers(img):
         if contour_overlaps:
             continue
 
-        # cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),2)
         letter = within_area(cnt)
-        if letter:  # Define your filter functions
+        if letter:
             filtered_contours.append((cnt, letter))
             cv2.rectangle(img,(x - 10,y - 10),(x+w + 10,y+h + 10),(0,255,0),2)
 
@@ -108,7 +104,6 @@ def DetectMarkers(img):
     for cnt, letter in filtered_contours:
         x, y, w, h = cv2.boundingRect(cnt)
         # letter_image = img[y - 10:y+h + 10, x - 10:x+w + 10]
-
         # letter = pytesseract.image_to_string(letter_image, config='--psm 10')  # Single character mode
 
         M = cv2.moments(cnt)
@@ -160,10 +155,11 @@ def within_area(cnt):
     cY = int(M["m01"] / M["m00"])
 
     for area in selected_areas:
-        x_min, y_min, x_max, y_max, letter = area  # Unpack area coordinates
+        x_min, y_min, x_max, y_max, letter = area
         if x_min <= cX <= x_max and y_min <= cY <= y_max:
             return letter
-
+        
+# Press q when you can see all markers in console, they will then be locked in
 while True:
     sct_img = sct.grab(bounding_box)
     frame = np.array(sct_img)
@@ -183,7 +179,6 @@ def GetHeading(center, front):
         delta_y = front[1] - center[1]
         heading = math.degrees(math.atan2(delta_y, delta_x))
 
-        # Adjust for compass readings (0 is North)
         heading = (heading + 90) % 360
     else:
         return None
@@ -199,7 +194,6 @@ while True:
     frame[floor_mask == 0] = 0
 
     center_x, center_y, closest_point = DetectCart(frame.copy())
-    # frame = DetectCart(frame.copy())
 
     if closest_point is not None:
             cv2.arrowedLine(frame, (center_x, center_y), closest_point, (0, 255, 0), 2)
@@ -217,7 +211,7 @@ while True:
     }
     response = requests.put(
         'http://192.168.1.127:5001/upload', 
-        data=json.dumps(request_data),  # Serialize the data into JSON
+        data=json.dumps(request_data),
         headers={'Content-Type': 'application/json'}
     )
     cv2.imshow('screen', frame)

@@ -18,6 +18,7 @@ BACKGROUND_COLOR = 'gray'
 
 path = None
 heading = None
+product = None
 
 def generate_map(image_markers, cart_image_pos, orientation):
     global heading
@@ -31,11 +32,9 @@ def generate_map(image_markers, cart_image_pos, orientation):
             max_x = data['width']  
             max_y = data['height'] 
 
-    # Calculate canvas size
     canvas_width = max_x * CELL_SIZE
     canvas_height = max_y * CELL_SIZE
 
-    # Create the map image
     map_img = Image.new('RGB', (canvas_width, canvas_height), color=BACKGROUND_COLOR)
     draw = ImageDraw.Draw(map_img)
 
@@ -64,12 +63,6 @@ def generate_map(image_markers, cart_image_pos, orientation):
             letter = obj[1]
             virtual_map_markers.append((letter, data))
 
-    path_x_a = 4 * CELL_SIZE
-    path_x_b = 31 * CELL_SIZE
-    path_y_a = 5 * CELL_SIZE
-    path_y_b = 18 * CELL_SIZE
-    # draw.rectangle((path_x_a, path_y_a, path_x_b, path_y_b), fill=None, outline=255)
-
     pos = triangulate_position(cart_image_pos, image_markers, virtual_map_markers)
 
     if pos is not None and heading is not None:
@@ -80,7 +73,6 @@ def generate_map(image_markers, cart_image_pos, orientation):
         arrow_end_x = cart_x + ARROW_LENGTH * math.cos(math.radians(adjusted_heading))
         arrow_end_y = cart_y - ARROW_LENGTH * math.sin(math.radians(adjusted_heading))
 
-        # Calculate cart bounding box
         half_length = CART_LENGTH * CELL_SIZE / 2
         half_width = CART_WIDTH * CELL_SIZE / 2
         top_left = (-half_length, -half_width)
@@ -98,9 +90,10 @@ def generate_map(image_markers, cart_image_pos, orientation):
         draw.polygon(rotated_vertices, fill=CART_COLOR)
         draw.ellipse((cart_x - radius, cart_y - radius, cart_x + radius, cart_y + radius), fill=CART_CENTER_COLOR)
 
+        global product
         goal = None
         for obj in objects:
-            if obj[2] == 'LOCATION' and obj[1] == 'milk':  # Find your milk
+            if obj[2] == 'LOCATION' and obj[1] == product:
                 data = eval(obj[3])
                 goal = (data['x'], data['y'])
                 break
@@ -115,14 +108,13 @@ def generate_map(image_markers, cart_image_pos, orientation):
                     for i in range(len(path_c) - 1):
                         x1, y1 = path_c[i][0] * CELL_SIZE, path_c[i][1] * CELL_SIZE
                         x2, y2 = path_c[i + 1][0] * CELL_SIZE, path_c[i + 1][1] * CELL_SIZE
-                        draw.line((x1, y1, x2, y2), fill='blue', width=3)  # Example color
+                        draw.line((x1, y1, x2, y2), fill='blue', width=3)
 
                 global path
                 path = path_c
             except Exception as e:
-                print("A* failed", e)
+                print("Path finding algorithm failed", e)
 
-    # Save the map image
     map_img.save('map.png')
 
 def rotate_point(point, angle, center):
@@ -137,3 +129,7 @@ def rotate_point(point, angle, center):
 def get_cart_heading():
     global heading
     return heading
+
+def set_product(pr):
+    global product
+    product = pr

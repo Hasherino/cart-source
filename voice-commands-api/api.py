@@ -13,6 +13,7 @@ with open('model/command_vectorizer.pkl', 'rb') as f:
     vectorizer = pickle.load(f)
 
 app = Flask(__name__)
+app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024 # 50 Mb limit
 
 @app.route('/process_audio', methods=['POST'])
 def process_audio():

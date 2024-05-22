@@ -1,13 +1,13 @@
 from flask import Flask, request, jsonify, Response, render_template, send_from_directory
-from utils import process_command, check_time
+from utils import process_command
 from virtual_map import generate_map
 import motor_controller
 import time
 import os
 import logging
 import base64
-from request_interface import send_audio_text
 
+# Log cleanup
 class AjaxFilter(logging.Filter):
     def filter(self, record):  
         return not any(x in record.getMessage() for x in ["upload", "map"])
@@ -16,6 +16,8 @@ log = logging.getLogger('werkzeug')
 log.addFilter(AjaxFilter())
 
 app = Flask(__name__)
+app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024 # 50 Mb limit
+
 frame = None
 markers = None
 cart_image_pos = None
@@ -31,8 +33,8 @@ def favicon():
 def upload():
     global frame, markers, cart_image_pos, heading
     data = request.get_json()
-    encoded = data['image']
-    frame = base64.b64decode(encoded)
+    encoded_frame = data['image']
+    frame = base64.b64decode(encoded_frame)
     markers = data['markers']
     heading = data['cartHeading']
     cart_image_pos = (data['cartX'], data['cartY'])
@@ -55,11 +57,6 @@ def video():
 @app.route('/map')
 def get_map():
     generate_map(markers, cart_image_pos, heading)
-    global released_time, initialized
-    if released_time:
-        stopping = check_time(released_time)
-        if stopping:
-            released_time = None
     return Response(open('map.png', 'rb').read(), mimetype='image/png')
 
 @app.route('/')
@@ -91,23 +88,6 @@ def instructions():
     
     print("Sending instructions:", code)
     return str(code)
-
-@app.route('/set_handlebar', methods=['POST'])
-def handlebar_state():
-    request_data = request.get_json()
-    print("Received request with payload:", request_data)
-
-    state = request_data.get('state')
-    state = state[2]
-    global released_time, initialized
-    
-    if state == "1" and not initialized:
-        send_audio_text("Hello, what would you like to buy?")
-        initialized = True
-    else:
-        released_time = time.time()
-
-    return "OK"
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000) 
